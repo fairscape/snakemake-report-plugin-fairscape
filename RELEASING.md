@@ -73,18 +73,15 @@ The upper bound `<0.2` is deliberate: the records document that crosses the
 boundary is a private contract between the two packages, and a minor bump there
 is allowed to change it.
 
-## Pending: raise the fairscape-cli floor
+## The fairscape-cli floor
 
-The `[artifacts]` extra is pinned at `fairscape-cli >=1.2.4` so that it stays
-installable, but the derived artifacts and schema inference actually need the
-importable `process_crate`, `process_linkml` and `infer_schema` added in
-fairscape-cli 1.2.10. Against 1.2.9 and older the plugin writes the crate and
-skips everything after it with a note.
-
-Once fairscape-cli 1.2.10 is on PyPI, raise the floor to
-`fairscape-cli >=1.2.10` in `pyproject.toml`. CI then starts asserting the
-derived artifacts again on its own — `tools/run-examples.sh` checks for
-`process_crate` and only demands the artifacts when they are possible.
+The `[artifacts]` extra is pinned at `fairscape-cli >=1.2.10`, the release that
+exposes `process_crate`, `process_linkml` and `infer_schema` as importable
+functions. Against anything older the plugin writes the crate and skips every
+step after it with a note, so raise this floor rather than lower it if those
+functions change again. `tools/run-examples.sh` probes for `process_crate` and
+only asserts the derived artifacts when they are possible, so the suite stays
+meaningful in an environment that predates the pin.
 
 ## If the catalog page goes wrong
 

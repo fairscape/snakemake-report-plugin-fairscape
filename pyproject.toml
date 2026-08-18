@@ -29,11 +29,9 @@ dependencies = [
 [project.optional-dependencies]
 # the derived artifacts (datasheet, evidence graph, LinkML export) are on by
 # default but are produced by fairscape-cli; without it the crate is still
-# written and those steps are skipped with a note.
-# NOTE: they need the importable process_crate/infer_schema added in
-# fairscape-cli 1.2.10 -- raise this floor once that release is on PyPI
-# (see RELEASING.md).
-artifacts = ["fairscape-cli >=1.2.4"]
+# written and those steps are skipped with a note. They need the importable
+# process_crate/process_linkml/infer_schema added in fairscape-cli 1.2.10.
+artifacts = ["fairscape-cli >=1.2.10"]
 validate = ["fairscape-models"]
 
 [project.urls]

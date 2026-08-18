@@ -22,9 +22,9 @@ snakemake --reporter fairscape  # writes ro-crate-metadata.json + artifacts
 The `[artifacts]` extra pulls in `fairscape-cli`, which generates everything
 downstream of the crate. Those steps — datasheet, evidence graph, LinkML export
 and schema inference — need **fairscape-cli 1.2.10 or newer**, the release that
-exposes `process_crate` and `infer_schema` as importable functions. Without a
-new enough fairscape-cli the crate itself is still written and every step after
-it is skipped with a note.
+exposes `process_crate` and `infer_schema` as importable functions; the extra
+pins it. Installed without the extra, the crate itself is still written and
+every step after it is skipped with a note.
 
 ## Where the code lives
 
