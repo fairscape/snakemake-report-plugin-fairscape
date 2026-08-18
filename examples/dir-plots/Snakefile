@@ -1,0 +1,15 @@
+# A script that writes an unknown number of files into a directory() output.
+# With --report-fairscape-expand-directories (see reporter-flags) each file
+# inside becomes a Dataset with isPartOf -> the directory and generatedBy ->
+# the producing Computation.
+
+rule all:
+    input:
+        "results/plots",
+
+
+rule make_plots:
+    output:
+        directory("results/plots"),
+    script:
+        "scripts/many_files.py"

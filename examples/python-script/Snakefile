@@ -1,0 +1,15 @@
+# A rule whose action is a Python script via the script: directive — the crate
+# must point the rule's Software at scripts/double.py, not at the Snakefile.
+
+rule all:
+    input:
+        "results/doubled.txt",
+
+
+rule double:
+    input:
+        "numbers.txt",
+    output:
+        "results/doubled.txt",
+    script:
+        "scripts/double.py"

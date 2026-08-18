@@ -1,0 +1,35 @@
+# Wildcard fan-out: one rule becomes three jobs (one per sample), then an
+# aggregation joins them. data/{sample}.txt are root inputs no job produced.
+
+SAMPLES = ["a", "b", "c"]
+
+
+configfile: "config.yaml"
+
+
+rule all:
+    input:
+        "results/summary.tsv",
+
+
+rule count_lines:
+    input:
+        "data/{sample}.txt",
+    output:
+        "results/counts/{sample}.count",
+    params:
+        label=lambda wc: f"sample-{wc.sample}",
+    shell:
+        "wc -l < {input} > {output}"
+
+
+rule summarize:
+    input:
+        expand("results/counts/{sample}.count", sample=SAMPLES),
+    output:
+        "results/summary.tsv",
+    shell:
+        "printf 'sample\\tlines\\n' > {output} && "
+        "for f in {input}; do "
+        "printf '%s\\t%s\\n' $(basename $f .count) $(cat $f); "
+        "done >> {output}"

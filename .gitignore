@@ -1,0 +1,19 @@
+# artifacts the examples generate
+ro-crate-metadata.json
+ro-crate-datasheet.html
+ro-crate-linkml.yaml
+ro-crate-prov-graph.json
+ro-crate-prov-graph.html
+ro-crate-preview.html
+ai_ready_score.json
+results/
+.snakemake/
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/

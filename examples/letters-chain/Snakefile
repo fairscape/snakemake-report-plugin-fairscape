@@ -1,0 +1,33 @@
+# Three-step linear chain, the Snakemake analogue of nf-fairscape's
+# examples/letters-chain: build a letter list, reverse it, split it in half.
+
+rule all:
+    input:
+        "results/first_half.txt",
+        "results/second_half.txt",
+
+
+rule make_list:
+    output:
+        "results/letters.txt",
+    shell:
+        "printf '%s\\n' a b c d e f g h > {output}"
+
+
+rule reverse:
+    input:
+        "results/letters.txt",
+    output:
+        "results/reversed.txt",
+    shell:
+        "tac {input} > {output}"
+
+
+rule split_halves:
+    input:
+        "results/reversed.txt",
+    output:
+        first="results/first_half.txt",
+        second="results/second_half.txt",
+    shell:
+        "head -n 4 {input} > {output.first} && tail -n 4 {input} > {output.second}"
