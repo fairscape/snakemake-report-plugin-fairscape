@@ -15,3 +15,5 @@ First release.
   re-reporting or re-executing a workflow reproduces them exactly.
 - The Snakefile-to-EVI mapping lives in `fairscape-conversion`
   (`plugins/snakemake`); this package only extracts plain data from Snakemake.
+- The derived artifacts require fairscape-cli 1.2.10 or newer; against an older
+  one the crate is written and the steps after it are skipped with a note.

@@ -30,5 +30,5 @@ pip install 'snakemake-report-plugin-fairscape[artifacts]'
 ```
 
 The `[artifacts]` extra pulls in `fairscape-cli`, which produces everything
-downstream of the crate. Without it the crate itself is still written and those
-steps are skipped with a note.
+downstream of the crate; those steps need fairscape-cli 1.2.10 or newer.
+Without it the crate itself is still written and they are skipped with a note.

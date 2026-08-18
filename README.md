@@ -20,8 +20,11 @@ snakemake --reporter fairscape  # writes ro-crate-metadata.json + artifacts
 ```
 
 The `[artifacts]` extra pulls in `fairscape-cli`, which generates everything
-downstream of the crate. Without it the crate itself is still written and those
-steps are skipped with a note.
+downstream of the crate. Those steps — datasheet, evidence graph, LinkML export
+and schema inference — need **fairscape-cli 1.2.10 or newer**, the release that
+exposes `process_crate` and `infer_schema` as importable functions. Without a
+new enough fairscape-cli the crate itself is still written and every step after
+it is skipped with a note.
 
 ## Where the code lives
 
@@ -245,7 +248,9 @@ tools/run-examples.sh
 `pip install -e .` plugin is silently absent from `--reporter`. Re-run
 `pip install .` after each change.
 
-`tools/run-examples.sh` runs all four examples (`letters-chain` — 3-rule linear
+`tools/run-examples.sh` asserts the derived artifacts only when the installed
+fairscape-cli can produce them, so it stays green against an older one while
+saying what it skipped. It runs all four examples (`letters-chain` — 3-rule linear
 chain; `sample-fanout` — wildcard fan-out over 3 samples + aggregation +
 configfile + root inputs + `--report-fairscape-schemas`; `python-script` — a
 `script:` rule, proving the Software `contentUrl` points at the .py file;

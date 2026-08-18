@@ -16,8 +16,11 @@ the derived artifacts:
   visualization of it
 * `ro-crate-linkml.yaml` — the LinkML/D4D (Datasheets for Datasets) export
 
-Those three are on by default and read only the crate JSON. Everything that
-touches the data files themselves is opt-in:
+Those three are on by default and read only the crate JSON. They are produced
+by fairscape-cli 1.2.10 or newer; with an older fairscape-cli — or none at all —
+the crate is still written and the steps after it are skipped with a note.
+
+Everything that touches the data files themselves is opt-in:
 
 ```bash
 # infer an EVI Schema per data file (csv/tsv/parquet/h5/hdf5/hea/dcm)

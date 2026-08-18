@@ -470,8 +470,8 @@ class Reporter(ReporterBase):
             from fairscape_cli.models.schema import infer_schema
             from fairscape_models.schema.registry import EXTENSION_MAP
         except ImportError:
-            print("NOTE: fairscape-cli not installed; skipping schema "
-                  "inference (pip install "
+            print("NOTE: fairscape-cli 1.2.10+ not available; skipping "
+                  "schema inference (pip install "
                   "'snakemake-report-plugin-fairscape[artifacts]')")
             return {}
 
@@ -526,8 +526,8 @@ class Reporter(ReporterBase):
         try:
             from fairscape_cli.utils.build_utils import process_crate
         except ImportError:
-            print("NOTE: fairscape-cli not installed; skipping derived "
-                  "artifacts (pip install "
+            print("NOTE: fairscape-cli 1.2.10+ not available; skipping "
+                  "derived artifacts (pip install "
                   "'snakemake-report-plugin-fairscape[artifacts]')")
             return
 
