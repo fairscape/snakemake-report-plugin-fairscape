@@ -2,10 +2,12 @@
 ro-crate-metadata.json
 ro-crate-datasheet.html
 ro-crate-linkml.yaml
-ro-crate-prov-graph.json
-ro-crate-prov-graph.html
+ro-crate-evidence-graph.json
+ro-crate-evidence-graph.html
 ro-crate-preview.html
-ai_ready_score.json
+ro-crate-croissant.json
+ai-ready-presentation.json
+ai-ready-review.html
 results/
 .snakemake/
 

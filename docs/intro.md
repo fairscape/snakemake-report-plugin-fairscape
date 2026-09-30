@@ -29,6 +29,7 @@ Install the plugin together with its artifact generator:
 pip install 'snakemake-report-plugin-fairscape[artifacts]'
 ```
 
-The `[artifacts]` extra pulls in `fairscape-cli`, which produces everything
-downstream of the crate; those steps need fairscape-cli 1.2.10 or newer.
-Without it the crate itself is still written and they are skipped with a note.
+The `[artifacts]` extra pulls in `fairscape-artifacts`, which produces the
+datasheet, the evidence graph and the inverse links downstream of the crate.
+Without it the crate and its LinkML export are still written and those steps
+are skipped with a note saying what to install.

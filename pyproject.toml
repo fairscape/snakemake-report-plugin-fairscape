@@ -23,15 +23,19 @@ classifiers = [
 dependencies = [
     "snakemake-interface-report-plugins >=1.3.0,<2",
     "snakemake-interface-common",
-    "fairscape-conversion >=0.1.0,<0.2",
+    "fairscape-conversion >=0.2.2,<0.3",
 ]
 
 [project.optional-dependencies]
-# the derived artifacts (datasheet, evidence graph, LinkML export) are on by
-# default but are produced by fairscape-cli; without it the crate is still
-# written and those steps are skipped with a note. They need the importable
-# process_crate/process_linkml/infer_schema added in fairscape-cli 1.2.10.
-artifacts = ["fairscape-cli >=1.2.10"]
+# The inverse links, EVI:inputs/outputs, evidence graph and datasheet are on by
+# default and come from fairscape-artifacts (0.2.0 added link-inverses);
+# without it the crate and the D4D/LinkML export are still written and those
+# steps are skipped with a note. Add fairscape-artifacts[review] for the
+# AI-Ready review on the datasheet.
+artifacts = ["fairscape-artifacts >=0.2.0"]
+# --report-fairscape-schemas reads the data files; the per-format readers are
+# fairscape-models extras that fairscape-conversion[schemas] pulls in.
+schemas = ["fairscape-conversion[schemas] >=0.2.2,<0.3"]
 validate = ["fairscape-models"]
 
 [project.urls]

@@ -10,15 +10,18 @@ snakemake --reporter fairscape
 That writes `ro-crate-metadata.json` into the working directory, followed by
 the derived artifacts:
 
-* `ro-crate-datasheet.html` and `ai_ready_score.json` — human-readable
-  datasheet and AI-Ready score
-* `ro-crate-prov-graph.json` / `.html` — the evidence graph and an interactive
-  visualization of it
+* `ro-crate-datasheet.html` — human-readable datasheet; with the AI-Ready
+  grader installed (`fairscape-artifacts[review]`) it carries the review and
+  `ai-ready-presentation.json` / `ai-ready-review.html` sit beside it
+* `ro-crate-evidence-graph.json` / `.html` — the evidence graph and an
+  interactive visualization of it
 * `ro-crate-linkml.yaml` — the LinkML/D4D (Datasheets for Datasets) export
 
-Those three are on by default and read only the crate JSON. They are produced
-by fairscape-cli 1.2.10 or newer; with an older fairscape-cli — or none at all —
-the crate is still written and the steps after it are skipped with a note.
+Those are on by default and read only the crate JSON. The export is
+`fairscape-conversion`'s own `d4d` plugin; the datasheet and the graph, and the
+inverse EVI links written back into the crate, are `fairscape-artifacts`
+(the `[artifacts]` extra). Without it the crate and the export are still
+written and the other steps are skipped with a note.
 
 Everything that touches the data files themselves is opt-in:
 
@@ -99,9 +102,11 @@ the persistence metadata and the filesystem state to a plain-data records
 document. The Snakefile-to-EVI mapping and the ARK minting live in
 [fairscape_conversion](https://github.com/fairscape/fairscape_conversion)
 (`plugins/snakemake`), shared with the Nextflow, Cromwell, MLflow, WRROC and
-C2M2 converters; the datasheet, evidence graph, LinkML export and schema
-inference are [fairscape-cli](https://github.com/fairscape/fairscape-cli)'s own
-functions, called directly rather than reimplemented.
+C2M2 converters, as do the LinkML/D4D export and the schema-inference step
+(`core/schemas`, over `fairscape_models.schema`); the datasheet, evidence graph
+and inverse links are
+[fairscape-artifacts](https://github.com/fairscape/fairscape_artifacts)'
+commands, run in-process rather than reimplemented.
 
 Setting `SNAKEMAKE_FAIRSCAPE_DUMP_RECORDS=<path>` on a report run dumps the
 records document that crosses that boundary, which is the fastest way to see

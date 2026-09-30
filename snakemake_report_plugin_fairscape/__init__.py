@@ -32,7 +32,7 @@ from typing import Optional
 from snakemake_interface_report_plugins.reporter import ReporterBase
 from snakemake_interface_report_plugins.settings import ReportSettingsBase
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 @dataclass
@@ -135,8 +135,9 @@ class ReportSettings(ReportSettingsBase):
     no_datasheet: bool = field(
         default=False,
         metadata={
-            "help": "Skip generating ro-crate-datasheet.html and "
-            "ai_ready_score.json (on by default; reads the crate JSON only).",
+            "help": "Skip generating ro-crate-datasheet.html (and, with the "
+            "AI-Ready grader installed, ai-ready-presentation.json / "
+            "ai-ready-review.html). On by default; reads the crate JSON only.",
             "env_var": False,
             "required": False,
         },
@@ -144,7 +145,7 @@ class ReportSettings(ReportSettingsBase):
     no_evidence_graph: bool = field(
         default=False,
         metadata={
-            "help": "Skip generating ro-crate-prov-graph.json/.html (on by "
+            "help": "Skip generating ro-crate-evidence-graph.json/.html (on by "
             "default; reads the crate JSON only).",
             "env_var": False,
             "required": False,
@@ -187,8 +188,9 @@ class ReportSettings(ReportSettingsBase):
     merkle: bool = field(
         default=False,
         metadata={
-            "help": "Also generate a SHA-256 Merkle tree over the crate's "
-            "files (reads every file).",
+            "help": "Ignored since 0.2.0: the Merkle tree was produced by "
+            "fairscape-cli, which this plugin no longer uses. Kept so "
+            "existing invocations still parse.",
             "env_var": False,
             "required": False,
         },
@@ -461,87 +463,120 @@ class Reporter(ReporterBase):
     def _infer_schemas(self, files, naan):
         """Infer an EVI Schema per data file with a supported extension.
 
-        Delegates to fairscape_cli.models.schema.infer_schema (which dispatches
-        on extension: csv/tsv/parquet/h5/hdf5/hea/dcm), overriding the CLI's
-        random-uuid guid with a deterministic ARK hashed from the Dataset's ARK
-        so crates stay reproducible across report re-runs.
+        The inference is fairscape_models.schema (csv/tsv/parquet/h5/hdf5/hea/
+        dcm); fairscape_conversion.core.schemas wraps it with the deterministic
+        ARK hashed from the Dataset's ARK, so crates stay reproducible across
+        report re-runs, and says what to install when a format's reader is
+        missing.
         """
         try:
-            from fairscape_cli.models.schema import infer_schema
-            from fairscape_models.schema.registry import EXTENSION_MAP
+            from fairscape_conversion.core.schemas import schema_node, supported
         except ImportError:
-            print("NOTE: fairscape-cli 1.2.10+ not available; skipping "
-                  "schema inference (pip install "
-                  "'snakemake-report-plugin-fairscape[artifacts]')")
+            print("NOTE: schema inference skipped: this fairscape-conversion has no "
+                  "core.schemas. To infer schemas run: pip install -U "
+                  "'fairscape-conversion[schemas]'")
             return {}
-
-        from fairscape_conversion.core.arks import mint_ark
 
         schemas = {}
         for path in files:
-            ext = os.path.splitext(path)[1].lower().lstrip(".")
-            if ext not in EXTENSION_MAP or not os.path.isfile(path):
+            if not supported(path) or not os.path.isfile(path):
                 continue
-            basename = os.path.basename(path)
-            dataset_ark = mint_ark(naan, "dataset", basename, os.path.normpath(path))
-            schema_ark = mint_ark(naan, "schema", basename, dataset_ark)
-            try:
-                model = infer_schema(
-                    path,
-                    name=f"Schema for {basename}",
-                    description=f"Schema inferred from the {ext} file '{path}' "
-                    "by snakemake-report-plugin-fairscape",
-                    guid=schema_ark,
-                )
-                schemas[path] = model.model_dump(by_alias=True, exclude_none=True)
-            except Exception as e:
-                print(f"WARNING: schema inference failed for '{path}': {e}")
+            node = schema_node(path, naan=naan, display_path=path,
+                               dataset_source=os.path.normpath(path),
+                               tool="snakemake-report-plugin-fairscape")
+            if node:
+                schemas[path] = node
         return schemas
 
     def _derive_artifacts(self, crate_path):
-        """Generate the derived artifacts by delegating to fairscape-cli.
+        """Generate the derived artifacts.
 
-        Everything downstream of the crate (inverse linking, EVI:inputs/
-        outputs, evidence graph, LinkML/D4D export, datasheet + AI-Ready
-        score) already exists in fairscape-cli as importable process_*
-        functions; nothing is reimplemented here.
+        The exports (the D4D/LinkML datasheet, Croissant) are fairscape-
+        conversion's own plugins, so they are always possible. Everything else
+        downstream of the crate — inverse linking, EVI:inputs/outputs, the
+        evidence graph, the datasheet with its previews and, when the grader
+        is installed, the AI-Ready review — is `fairscape-artifacts`, run
+        command by command in this interpreter. Nothing is reimplemented here.
         """
         s = self.settings
-        steps_on = [
-            not getattr(s, "no_link_inverses", False),
-            not getattr(s, "no_evidence_graph", False),
-            not getattr(s, "no_linkml", False),
-            not getattr(s, "no_datasheet", False),
-            getattr(s, "preview", False),
-            getattr(s, "croissant", False),
-            getattr(s, "merkle", False),
-        ]
-        if not any(steps_on):
-            return
+        crate_path = Path(crate_path).resolve()
+        crate_dir = crate_path.parent
         if crate_path.name != "ro-crate-metadata.json":
             print("WARNING: derived artifacts require the crate to be named "
                   "ro-crate-metadata.json; skipping them for "
                   f"'{crate_path.name}'")
             return
-        try:
-            from fairscape_cli.utils.build_utils import process_crate
-        except ImportError:
-            print("NOTE: fairscape-cli 1.2.10+ not available; skipping "
-                  "derived artifacts (pip install "
-                  "'snakemake-report-plugin-fairscape[artifacts]')")
-            return
+        if getattr(s, "merkle", False):
+            print("NOTE: the Merkle tree was a fairscape-cli feature and is no "
+                  "longer produced; --report-fairscape-merkle is ignored.")
 
-        results = process_crate(
-            crate_path.resolve().parent,
-            link_inverses=not s.no_link_inverses,
-            add_io=True,
-            evidence_graph=not s.no_evidence_graph,
-            linkml=not s.no_linkml,
-            datasheet=not s.no_datasheet,
-            preview=s.preview,
-            croissant=s.croissant,
-            merkle=s.merkle,
-            force=True,
-        )
-        for err in results.get("errors", []):
-            print(f"WARNING: {err}")
+        artifacts_steps = [
+            not s.no_link_inverses,
+            not s.no_evidence_graph,
+            not s.no_datasheet,
+            s.preview,
+        ]
+        artifacts = None
+        if any(artifacts_steps):
+            try:
+                from fairscape_artifacts.cli import main as artifacts
+            except ImportError:
+                print("NOTE: fairscape-artifacts not installed; skipping the "
+                      "inverse links, inputs/outputs, evidence graph and "
+                      "datasheet. To produce them run: pip install "
+                      "'snakemake-report-plugin-fairscape[artifacts]'")
+
+        def run(*argv):
+            try:
+                code = artifacts([*argv, str(crate_dir)])
+            except SystemExit as e:  # a command reporting failure
+                code = e.code if isinstance(e.code, int) else 1
+            except Exception as e:  # noqa: BLE001 — one artifact must not sink the report
+                print(f"WARNING: fairscape-artifacts {argv[0]} failed: {e}")
+                return False
+            if code:
+                print(f"WARNING: fairscape-artifacts {argv[0]} exited {code}")
+            return not code
+
+        # the two steps that rewrite the crate go first, so every export and
+        # page below sees the completed graph
+        if artifacts:
+            if not s.no_link_inverses:
+                run("link-inverses")
+            run("add-io")
+            if not s.no_evidence_graph:
+                run("evidence-graph")
+
+        if s.croissant:
+            self._export("croissant", crate_path, crate_dir / "ro-crate-croissant.json")
+        if not s.no_linkml:
+            self._export("d4d", crate_path, crate_dir / "ro-crate-linkml.yaml")
+
+        if artifacts:
+            if not s.no_datasheet:
+                run("datasheet", *([] if s.preview else ["--no-previews"]))
+            elif s.preview:
+                print("NOTE: ro-crate-preview.html is written with the datasheet; "
+                      "drop --report-fairscape-no-datasheet to get it.")
+
+    @staticmethod
+    def _export(plugin_name, crate_path, target):
+        """One fairscape-conversion export of the crate on disk, written as
+        YAML or JSON by the target's extension."""
+        import importlib
+
+        try:
+            plugin = importlib.import_module(f"fairscape_conversion.plugins.{plugin_name}")
+            with open(crate_path) as f:
+                crate = json.load(f)
+            result = plugin.convert("export", crate)
+            if target.suffix in (".yaml", ".yml"):
+                import yaml
+                text = yaml.dump(json.loads(json.dumps(result, default=str)),
+                                 sort_keys=False, allow_unicode=True)
+            else:
+                text = json.dumps(result, indent=2, default=str)
+            target.write_text(text)
+            print(f"wrote {target}")
+        except Exception as e:  # noqa: BLE001
+            print(f"WARNING: {plugin_name} export failed: {e}")

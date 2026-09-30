@@ -11,18 +11,24 @@ snakemake=${SNAKEMAKE:-snakemake}
 python=${PYTHON:-"$(dirname "$(command -v "$snakemake")")/python"}
 [ -x "$python" ] || python=python3
 
-artifacts=(ro-crate-datasheet.html ai_ready_score.json ro-crate-linkml.yaml
-           ro-crate-prov-graph.json ro-crate-prov-graph.html)
+artifacts=(ro-crate-datasheet.html ro-crate-linkml.yaml
+           ro-crate-evidence-graph.json ro-crate-evidence-graph.html)
 
-# The derived artifacts are produced by fairscape-cli's process_crate, which
-# exists from fairscape-cli 1.2.10. Against an older one the plugin writes the
-# crate and skips them with a note, so assert them only when they are possible.
-if "$python" -c "from fairscape_cli.utils.build_utils import process_crate" 2>/dev/null; then
+# The D4D/LinkML export is fairscape-conversion's own; the rest of the derived
+# artifacts come from fairscape-artifacts. Without it the plugin writes the
+# crate and the export and skips the others with a note, so assert them only
+# when they are possible. The AI-Ready review additionally needs the grader
+# (fairscape-artifacts[review]).
+if "$python" -c "import fairscape_artifacts" 2>/dev/null; then
     check_artifacts=1
 else
     check_artifacts=0
-    echo "NOTE: installed fairscape-cli cannot import process_crate (needs >= 1.2.10);"
+    artifacts=(ro-crate-linkml.yaml)
+    echo "NOTE: fairscape-artifacts is not installed for $python;"
     echo "      crates are still built and validated, derived artifacts are not asserted."
+fi
+if "$python" -c "import aireadiness_evidence" 2>/dev/null; then
+    artifacts+=(ai-ready-presentation.json)
 fi
 
 arks() { "$python" -c "import json,sys; [print(n['@id']) for n in json.load(open(sys.argv[1]))['@graph']]" "$1"; }
@@ -49,9 +55,9 @@ for example in examples/*/; do
                     exit 1
                 fi
             done
-            echo "  derived artifacts present (datasheet, ai-ready, linkml, prov-graph)"
+            echo "  derived artifacts present (${artifacts[*]})"
         else
-            echo "  derived artifacts not asserted (fairscape-cli too old)"
+            echo "  derived artifacts not asserted (fairscape-artifacts missing)"
         fi
         arks ro-crate-metadata.json > /tmp/arks-before.$$
         $snakemake --reporter fairscape $flags >/dev/null 2>&1

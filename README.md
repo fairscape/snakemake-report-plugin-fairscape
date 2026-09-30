@@ -24,13 +24,15 @@ snakemake --reporter fairscape  # writes the crate + artifacts
 | File | What |
 | ---- | ---- |
 | `ro-crate-metadata.json` | the provenance graph: one entry per job, rule, and file, with the edges between them |
-| `ro-crate-datasheet.html` + `ai_ready_score.json` | human-readable summary and an AI-readiness score |
-| `ro-crate-prov-graph.json` / `.html` | evidence graph + interactive viewer |
+| `ro-crate-datasheet.html` | human-readable summary; carries the AI-Ready review when the grader is installed (`ai-ready-presentation.json`, `ai-ready-review.html`) |
+| `ro-crate-evidence-graph.json` / `.html` | evidence graph + interactive viewer |
 | `ro-crate-linkml.yaml` | LinkML / Datasheets-for-Datasets export |
 
-Everything after the crate comes from `fairscape-cli` (the `[artifacts]` extra,
-1.2.10+). Without it the crate is still written and the rest is skipped with a
-note.
+The LinkML export is `fairscape-conversion`'s own; the datasheet, graph and
+the inverse links come from `fairscape-artifacts` (the `[artifacts]` extra).
+Without it the crate and the export are still written and the rest is skipped
+with a note that says what to install. The AI-Ready review needs
+`fairscape-artifacts[review]` on top.
 
 ## Options
 
@@ -45,10 +47,9 @@ All optional, all prefixed `--report-fairscape-`:
 | `license` | CC-BY-4.0 | license URL |
 | `version` | `1.0` | crate version |
 | `naan` | `59853` | ARK Name Assigning Authority Number |
-| `schemas` | off | infer a column schema per data file (csv/tsv/parquet/h5/hdf5/hea/dcm — reads the data) |
+| `schemas` | off | infer a column schema per data file (csv/tsv/parquet/h5/hdf5/hea/dcm — reads the data; the readers are the `[schemas]` extra) |
 | `expand-directories` | off | describe each file inside a `directory()` output, not just the directory |
 | `expand-max-files` | `1000` | cap per expanded directory |
-| `merkle` | off | SHA-256 Merkle tree (reads every file) |
 | `preview` | off | also write `ro-crate-preview.html` |
 | `croissant` | off | also write a Croissant JSON-LD export |
 | `no-datasheet` / `no-evidence-graph` / `no-linkml` / `no-link-inverses` | on | skip that step |
